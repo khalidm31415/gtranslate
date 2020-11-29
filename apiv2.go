@@ -24,7 +24,13 @@ const (
 	defaultNumberOfRetries = 2
 )
 
-func translate(text, from, to string, withVerification bool, tries int, delay time.Duration) (string, error) {
+// Translation models the result of google translate API
+type Translation struct {
+	Text           string
+	SourceLanguage string
+}
+
+func translate(text, from, to string, withVerification bool, tries int, delay time.Duration) (Translation, error) {
 	if tries == 0 {
 		tries = defaultNumberOfRetries
 	}
@@ -63,7 +69,7 @@ func translate(text, from, to string, withVerification bool, tries int, delay ti
 
 	u, err := url.Parse(urll)
 	if err != nil {
-		return "", nil
+		return Translation{}, nil
 	}
 
 	parameters := url.Values{}
@@ -84,9 +90,9 @@ func translate(text, from, to string, withVerification bool, tries int, delay ti
 		r, err = http.Get(u.String())
 		if err != nil {
 			if err == http.ErrHandlerTimeout {
-				return "", errBadNetwork
+				return Translation{}, errBadNetwork
 			}
-			return "", err
+			return Translation{}, err
 		}
 
 		if r.StatusCode == http.StatusOK {
@@ -101,14 +107,14 @@ func translate(text, from, to string, withVerification bool, tries int, delay ti
 
 	raw, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		return Translation{}, err
 	}
 
 	var resp []interface{}
 
 	err = json.Unmarshal([]byte(raw), &resp)
 	if err != nil {
-		return "", err
+		return Translation{}, err
 	}
 
 	responseText := ""
@@ -123,5 +129,13 @@ func translate(text, from, to string, withVerification bool, tries int, delay ti
 		}
 	}
 
-	return responseText, nil
+	var lang string
+	lang, _ = resp[2].(string)
+
+	translation := Translation{
+		Text:           responseText,
+		SourceLanguage: lang,
+	}
+
+	return translation, nil
 }

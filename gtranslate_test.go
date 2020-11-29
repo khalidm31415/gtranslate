@@ -6,9 +6,9 @@ import (
 )
 
 func TestTranslateWithFromTo(t *testing.T) {
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 1; i++ {
 		for _, ta := range testingTable {
-			resp, err := TranslateWithParams(ta.inText, TranslationParams{
+			translation, err := TranslateWithParams(ta.inText, TranslationParams{
 				From:       ta.langFrom,
 				To:         ta.langTo,
 				Tries:      5,
@@ -19,8 +19,11 @@ func TestTranslateWithFromTo(t *testing.T) {
 				t.Error(err, err.Error())
 				t.Fail()
 			}
-			if resp != ta.outText {
-				t.Error("translated text is not the expected", ta.outText, " != ", resp)
+			if translation.Text != ta.outText {
+				t.Errorf("Translated text is not the expected. Expected: %v. Got: %v\n", ta.outText, translation.Text)
+			}
+			if translation.SourceLanguage != ta.langFrom {
+				t.Errorf("Detected language is not the expected. Expected: %v. Got: %v\n", ta.langFrom, translation.SourceLanguage)
 			}
 		}
 	}
